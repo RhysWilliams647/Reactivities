@@ -1,8 +1,9 @@
 import React from 'react';
-import { Item, Button, Segment, Icon } from "semantic-ui-react";
+import { Item, Button, Segment, Icon, Label } from "semantic-ui-react";
 import { Link } from 'react-router-dom';
 import { IActivity } from '../../../app/models/activity';
 import { format } from 'date-fns';
+import ActivityListItemAttendees from './ActivityListItemAttendees';
 
 interface IProps {
     activity: IActivity;
@@ -10,18 +11,32 @@ interface IProps {
 
 const ActivityListItem: React.FC<IProps> = ({ activity }) => {
 
+    const host = activity.attendees.filter((attendee) => {
+        return attendee.isHost;
+    })[0];
+
     return (
 
         <Segment.Group>
             <Segment>
                 <Item.Group>
                     <Item>
-                        <Item.Image size='tiny' circular src='/assets/user.png' />
+                        <Item.Image size='tiny' circular src={host.image || '/assets/user.png'} />
                         <Item.Content>
-                            <Item.Header as='a'>{activity.title}</Item.Header>
+                            <Item.Header as={Link} to={`/activities/${activity.id}`}>{activity.title}</Item.Header>
                             <Item.Description>
-                                Hosted by Bob
-                        </Item.Description>
+                                Hosted by {host.displayName}
+                            </Item.Description>
+                            {activity.isHost &&
+                                <Item.Description>
+                                    <Label basic color='orange' content={'You are hosting this content'} />
+                                </Item.Description>
+                            }
+                            {activity.isGoing && !activity.isHost &&
+                                <Item.Description>
+                                    <Label basic color='orange' content={'You are going to this activity'} />
+                                </Item.Description>
+                            }
                         </Item.Content>
                     </Item>
                 </Item.Group>
@@ -32,7 +47,7 @@ const ActivityListItem: React.FC<IProps> = ({ activity }) => {
                 <Icon name='marker' /> {activity.venue}, {activity.city}
             </Segment>
             <Segment secondary>
-                Attendees will go here
+                <ActivityListItemAttendees attendees={activity.attendees} />
             </Segment>
             <Segment clearing>
                 <span>{activity.description}</span>

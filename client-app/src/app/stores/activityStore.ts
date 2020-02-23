@@ -5,12 +5,13 @@ import agent from '../api/agent';
 import { history } from '../..';
 import { toast } from 'react-toastify';
 import { RootStore } from './rootStore';
+import { setActivityProps, createAttendee } from '../common/util/util';
 
 export default class ActivityStore {
 
     rootStore: RootStore;
 
-    constructor(rootStore: RootStore){
+    constructor(rootStore: RootStore) {
         this.rootStore = rootStore;
     }
 
@@ -19,6 +20,7 @@ export default class ActivityStore {
     @observable loadingInitial = false;
     @observable submitting = false;
     @observable target = '';
+    @observable loading = false;
 
     @computed get activitiesByDate() {
         return this.groupActivitiesByDate(Array.from(this.activityRegistry.values()));
@@ -33,7 +35,7 @@ export default class ActivityStore {
             const date = activity.date.toISOString().split('T')[0];
             activities[date] = activities[date] ? [...activities[date], activity] : [activity];
             return activities;
-        }, {} as {[key: string]: IActivity[]}));
+        }, {} as { [key: string]: IActivity[] }));
     }
 
     @action loadActivities = async () => {
@@ -42,11 +44,11 @@ export default class ActivityStore {
             const activities = await agent.Activities.list();
             runInAction('loading activities', () => {
                 activities.forEach(activity => {
-                    activity.date = new Date(activity.date);
+                    setActivityProps(activity, this.rootStore.userStore.user!);
                     this.activityRegistry.set(activity.id, activity);
                 });
                 this.loadingInitial = false;
-            });          
+            });
         } catch (err) {
             runInAction('loading activities error', () => {
                 this.loadingInitial = false;
@@ -57,21 +59,21 @@ export default class ActivityStore {
 
     @action loadActivity = async (id: string) => {
         let activity = this.getActivity(id);
-        if(activity){
+        if (activity) {
             this.activity = activity;
             return activity;
-        }else{
+        } else {
             this.loadingInitial = true;
-            try{
+            try {
                 activity = await agent.Activities.details(id);
                 runInAction('Loading activity', () => {
-                    activity.date = new Date(activity.date);
+                    setActivityProps(activity, this.rootStore.userStore.user!);
                     this.activity = activity;
                     this.activityRegistry.set(activity.id, activity);
                     this.loadingInitial = false;
                 });
                 return activity;
-            }catch(err){
+            } catch (err) {
                 runInAction('Loading activity error', () => {
                     this.loadingInitial = false;
                 });
@@ -94,6 +96,13 @@ export default class ActivityStore {
         try {
             await agent.Activities.create(activity);
 
+            const attendee = createAttendee(this.rootStore.userStore.user!);
+            attendee.isHost = true;
+            let attendees = [];
+            attendees.push(attendee);
+            activity.attendees = attendees;
+            activity.isHost = true;
+
             runInAction('Creating activity', () => {
                 this.activityRegistry.set(activity.id, activity);
                 this.activity = activity;
@@ -111,7 +120,7 @@ export default class ActivityStore {
 
     @action editActivity = async (activity: IActivity) => {
         this.submitting = true;
-        try{
+        try {
             await agent.Activities.edit(activity);
 
             runInAction('Editing activity', () => {
@@ -120,7 +129,7 @@ export default class ActivityStore {
                 this.submitting = false;
             });
             history.push(`/activities/${activity.id}`);
-        }catch(err){
+        } catch (err) {
             runInAction('Editing activities error', () => {
                 this.submitting = false;
             });
@@ -132,20 +141,63 @@ export default class ActivityStore {
     @action deleteActivity = async (event: SyntheticEvent<HTMLButtonElement>, id: string) => {
         this.submitting = true;
         this.target = event.currentTarget.name;
-        try{
+        try {
             await agent.Activities.delete(id);
 
             runInAction('Deleting activity', () => {
                 this.activityRegistry.delete(id);
                 this.submitting = false;
-                this.target ='';
+                this.target = '';
             });
-        }catch(err){
+        } catch (err) {
             runInAction('Deleting activities error', () => {
                 this.submitting = false;
-                this.target ='';
+                this.target = '';
             });
-            console.log(err); 
+            console.log(err);
+        }
+    }
+
+    @action attendActivity = async () => {
+        const attendee = createAttendee(this.rootStore.userStore.user!);
+        this.loading = true;
+        try {
+            await agent.Activities.attend(this.activity!.id);
+            runInAction(() => {
+                if (this.activity) {
+                    this.activity.attendees.push(attendee);
+                    this.activity.isGoing = true;
+                    this.activityRegistry.set(this.activity.id, this.activity);
+                    this.loading = false;
+                }
+            });
+        } catch (err) {
+            runInAction(() => {
+                this.loading = false;
+                toast.error('An error has occurred signing up to activity');
+            })
+        }
+    }
+
+    @action cancelAttendance = async () => {
+        this.loading = true;
+        try {
+            await agent.Activities.unattend(this.activity!.id);
+            runInAction(() => {
+                if (this.activity) {
+                    this.activity.attendees = this.activity.attendees.filter((attendee) =>
+                        attendee.username !== this.rootStore.userStore.user!.username
+                    );
+                    this.activity.isGoing = false;
+                    this.activityRegistry.set(this.activity.id, this.activity);
+                    this.loading = false;
+                }
+            });
+        } catch (err) {
+            runInAction(() => {
+                this.loading = false;
+                toast.error('An error has occurred cancelling attendance');
+            });
         }
     }
 }
