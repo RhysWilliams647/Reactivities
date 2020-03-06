@@ -24,6 +24,8 @@ const ActivityDetailedHeader: React.FC<{ activity: IActivity }> = ({ activity })
     const rootStore = useContext(RootStoreContext);
     const { attendActivity, cancelAttendance, loading } = rootStore.activityStore;
 
+    const host = activity.attendees.filter(x => x.isHost)[0];
+
     return (
 
         <Segment.Group>
@@ -40,7 +42,7 @@ const ActivityDetailedHeader: React.FC<{ activity: IActivity }> = ({ activity })
                                 />
                                 <p>{format(activity.date, 'eeee do MMMM')}</p>
                                 <p>
-                                    Hosted by <strong>Bob</strong>
+                                    Hosted by <Link to={`/profile/${host.username}`}><strong> {host.displayName}</strong></Link>
                                 </p>
                             </Item.Content>
                         </Item>
@@ -48,18 +50,18 @@ const ActivityDetailedHeader: React.FC<{ activity: IActivity }> = ({ activity })
                 </Segment>
             </Segment>
             <Segment clearing attached='bottom'>
-                {activity.isHost ? 
-                (
-                    <Button as={Link} to={`/manage/${activity.id}`} color='orange' floated='right'>
-                        Manage Event
+                {activity.isHost ?
+                    (
+                        <Button as={Link} to={`/manage/${activity.id}`} color='orange' floated='right'>
+                            Manage Event
                     </Button>
-                ) : activity.isGoing ? 
-                (
-                    <Button onClick={cancelAttendance} loading={loading}>Cancel attendance</Button>
-                ) : 
-                (
-                    <Button onClick={attendActivity} loading={loading} color='teal'>Join Activity</Button>
-                )}
+                    ) : activity.isGoing ?
+                        (
+                            <Button onClick={cancelAttendance} loading={loading}>Cancel attendance</Button>
+                        ) :
+                        (
+                            <Button onClick={attendActivity} loading={loading} color='teal'>Join Activity</Button>
+                        )}
 
             </Segment>
         </Segment.Group>
