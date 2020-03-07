@@ -7,30 +7,44 @@ import { RouteComponentProps } from 'react-router-dom'
 import LoadingComponent from '../../app/layout/LoadingComponent'
 import { observer } from 'mobx-react-lite'
 
-interface RouteParams{
+interface RouteParams {
     username: string;
 }
 
-interface IProps extends RouteComponentProps<RouteParams>{
+interface IProps extends RouteComponentProps<RouteParams> {
 
 }
 
-const ProfilePage: React.FC<IProps> = ({match}) => {
+const ProfilePage: React.FC<IProps> = ({ match }) => {
 
     const rootStore = useContext(RootStoreContext);
-    const { profile, loadingProfile, loadProfile } = rootStore.profileStore;
+    const {
+        profile, 
+        loadingProfile, 
+        loadProfile, 
+        follow, 
+        unfollow, 
+        isCurrentUser, 
+        loading,
+        setActiveTab
+    } = rootStore.profileStore;
 
     useEffect(() => {
         loadProfile(match.params.username);
     }, [loadProfile, match]);
 
-    if(loadingProfile) return <LoadingComponent content='Loading...'/>
+    if (loadingProfile) return <LoadingComponent content='Loading...' />
 
     return (
         <Grid>
             <Grid.Column width={16}>
-                <ProfileHeader profile={profile!}/>
-                <ProfileContent />
+                <ProfileHeader
+                    follow={follow}
+                    unfollow={unfollow}
+                    isCurrentUser={isCurrentUser}
+                    loading={loading}
+                    profile={profile!} />
+                <ProfileContent setActiveTab={setActiveTab} />
             </Grid.Column>
         </Grid>
     )
