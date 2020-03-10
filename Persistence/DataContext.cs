@@ -34,29 +34,29 @@ namespace Persistence
                     new Value{Id = 3, Name = "Value 103"}
                 );
 
-                builder.Entity<UserActivity>().HasKey(k => new { k.AppUserId, k.ActivityId });
-                builder.Entity<UserActivity>()
-                    .HasOne(u => u.AppUser)
-                    .WithMany(a => a.UserActivities)
-                    .HasForeignKey(u => u.AppUserId);
-                builder.Entity<UserActivity>()
-                    .HasOne(a => a.Activity)
-                    .WithMany(a => a.UserActivities)
-                    .HasForeignKey(a => a.ActivityId);
+            builder.Entity<UserActivity>().HasKey(k => new { k.AppUserId, k.ActivityId });
+            builder.Entity<UserActivity>()
+                .HasOne(u => u.AppUser)
+                .WithMany(a => a.UserActivities)
+                .HasForeignKey(u => u.AppUserId);
+            builder.Entity<UserActivity>()
+                .HasOne(a => a.Activity)
+                .WithMany(a => a.UserActivities)
+                .HasForeignKey(a => a.ActivityId);
 
-                builder.Entity<UserFollowing>(b => 
-                {
-                    b.HasKey(k => new{ k.ObserverId, k.TargetId });
-                    b.HasOne(o => o.Observer)
-                        .WithMany(f => f.Followings)
-                        .HasForeignKey(o => o.ObserverId)
-                        .OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<UserFollowing>(b => 
+            {
+                b.HasKey(k => new{ k.ObserverId, k.TargetId });
+                b.HasOne(o => o.Observer)
+                    .WithMany(f => f.Followings)
+                    .HasForeignKey(o => o.ObserverId)
+                    .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne(o => o.Target)
-                        .WithMany(f => f.Followers)
-                        .HasForeignKey(o => o.TargetId)
-                        .OnDelete(DeleteBehavior.Restrict);
-                });
+                b.HasOne(o => o.Target)
+                    .WithMany(f => f.Followers)
+                    .HasForeignKey(o => o.TargetId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
         }
     }
