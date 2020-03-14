@@ -57,7 +57,7 @@ namespace API
         //     services.AddDbContext<DataContext>(opts =>
         //     {
         //         opts.UseLazyLoadingProxies();
-        //         opts.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
+        //         opts.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
         //     });
 
         //     ConfigureServices(services);
