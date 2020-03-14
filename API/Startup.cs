@@ -41,27 +41,27 @@ namespace API
 
         public IConfiguration Configuration { get; }
 
-        // public void ConfigureDevelopmentServices(IServiceCollection services)
-        // {
-        //     services.AddDbContext<DataContext>(opts =>
-        //     {
-        //         opts.UseLazyLoadingProxies();
-        //         opts.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
-        //     });
+        public void ConfigureDevelopmentServices(IServiceCollection services)
+        {
+            services.AddDbContext<DataContext>(opts =>
+            {
+                opts.UseLazyLoadingProxies();
+                opts.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
+            });
 
-        //     ConfigureServices(services);
-        // }
+            ConfigureServices(services);
+        }
 
-        // public void ConfigureProductionServices(IServiceCollection services)
-        // {
-        //     services.AddDbContext<DataContext>(opts =>
-        //     {
-        //         opts.UseLazyLoadingProxies();
-        //         opts.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
-        //     });
+        public void ConfigureProductionServices(IServiceCollection services)
+        {
+            services.AddDbContext<DataContext>(opts =>
+            {
+                opts.UseLazyLoadingProxies();
+                opts.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+            });
 
-        //     ConfigureServices(services);
-        // }
+            ConfigureServices(services);
+        }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -69,7 +69,7 @@ namespace API
             services.AddDbContext<DataContext>(opts =>
             {
                 opts.UseLazyLoadingProxies();
-                opts.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+                opts.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
 
             services.AddCors(opt =>
@@ -140,7 +140,9 @@ namespace API
             services.AddScoped<IUserAccessor, UserAccessor>();
             services.AddScoped<IPhotoAccessor, PhotoAccessor>();
             services.AddScoped<IProfileReader, ProfileReader>();
+            services.AddScoped<IFacebookAccessor, FacebookAccessor>();
             services.Configure<CloudinarySettings>(Configuration.GetSection("Cloudinary"));
+            services.Configure<FacebookAppSettings>(Configuration.GetSection("Authentication:Facebook"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
