@@ -69,7 +69,7 @@ namespace API
             services.AddDbContext<DataContext>(opts =>
             {
                 opts.UseLazyLoadingProxies();
-                opts.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
+                opts.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
             });
 
             services.AddCors(opt =>
@@ -86,7 +86,7 @@ namespace API
             services.AddAutoMapper(typeof(List.Handler).Assembly);
             services.AddSignalR();
 
-            services.AddControllers(opts => 
+            services.AddControllers(opts =>
             {
                 var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
                 opts.Filters.Add(new AuthorizeFilter(policy));
@@ -98,9 +98,9 @@ namespace API
             identityBuilder.AddEntityFrameworkStores<DataContext>();
             identityBuilder.AddSignInManager<SignInManager<AppUser>>();
 
-            services.AddAuthorization(opt => 
+            services.AddAuthorization(opt =>
             {
-                opt.AddPolicy("IsActivityHost", policy => 
+                opt.AddPolicy("IsActivityHost", policy =>
                 {
                     policy.Requirements.Add(new IsHostRequirement());
                 });
@@ -109,7 +109,7 @@ namespace API
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(opts => 
+            .AddJwtBearer(opts =>
             {
                 opts.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -122,11 +122,11 @@ namespace API
                 };
                 opts.Events = new JwtBearerEvents
                 {
-                    OnMessageReceived = context => 
+                    OnMessageReceived = context =>
                     {
                         var accessToken = context.Request.Query["access_token"];
                         var path = context.HttpContext.Request.Path;
-                        if(!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chat"))
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chat"))
                         {
                             context.Token = accessToken;
 
@@ -153,8 +153,27 @@ namespace API
             {
                 //app.UseDeveloperExceptionPage();
             }
+            else
+            {
+                app.UseHsts();
+                app.UseHttpsRedirection();
+            }
 
-            // app.UseHttpsRedirection();
+
+            app.UseXContentTypeOptions();
+            app.UseReferrerPolicy(opts => opts.NoReferrer());
+            app.UseXXssProtection(opts => opts.EnabledWithBlockMode());
+            app.UseXfo(opts => opts.Deny());
+            app.UseCsp(opts =>
+                opts.BlockAllMixedContent()
+                    .StyleSources(s => s.Self()
+                        .CustomSources("https://fonts.googleapis.com", "sha256-F4GpCPyRepgP5znjMD8sc7PEjzet5Eef4r09dEGPpTs="))
+                    .FontSources(s => s.Self().CustomSources("https://fonts.gstatic.com", "data:"))
+                    .FormActions(s => s.Self())
+                    .FrameAncestors(s => s.Self())
+                    .ImageSources(s => s.Self().CustomSources("https://res.cloudinary.com", "blob:", "data:"))
+                    .ScriptSources(s => s.Self().CustomSources("sha256-ma5XxS1EBgt17N22Qq31rOxxRWRfzUTQS1KOtfYwuNo="))
+            );
 
             app.UseDefaultFiles();
             app.UseStaticFiles();
